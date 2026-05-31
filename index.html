@@ -453,7 +453,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-seri
   <div class="modal">
     <div class="modal-title" id="modal-gasto-title">Agregar gasto</div>
     <div class="field"><label>Descripción</label><input type="text" id="mg-desc" placeholder="ej. Coto compra semanal"></div>
-    <div class="field"><label>Importe (ARS)</label><input type="number" id="mg-amt" placeholder="0" oninput="livePreview(this,'mg-preview','ARS')"><div class="amt-preview" id="mg-preview"></div></div>
+    <div class="field"><label>Importe (ARS)</label><input type="text" inputmode="decimal" id="mg-amt" placeholder="0" oninput="livePreview(this,'mg-preview','ARS')"><div class="amt-preview" id="mg-preview"></div></div>
     <div class="field"><label>Subcategoría (opcional)</label><input type="text" id="mg-sub" placeholder="ej. mercado, farmacia..."></div>
     <input type="hidden" id="mg-cat">
     <input type="hidden" id="mg-edit-id">
@@ -465,7 +465,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-seri
   <div class="modal">
     <div class="modal-title" id="modal-fijo-title">Agregar fijo</div>
     <div class="field"><label>Nombre</label><input type="text" id="mf-nombre" placeholder="ej. Jardín Feli"></div>
-    <div class="field"><label>Importe de referencia (ARS)</label><input type="number" id="mf-amt" placeholder="0" oninput="livePreview(this,'mf-preview','ARS')"><div class="amt-preview" id="mf-preview"></div></div>
+    <div class="field"><label>Importe de referencia (ARS)</label><input type="text" inputmode="decimal" id="mf-amt" placeholder="0" oninput="livePreview(this,'mf-preview','ARS')"><div class="amt-preview" id="mf-preview"></div></div>
     <div class="field"><label>Día de vencimiento (del mes)</label><input type="number" id="mf-dia" placeholder="ej. 10" min="1" max="31"></div>
     <input type="hidden" id="mf-tipo">
     <input type="hidden" id="mf-edit-id">
@@ -480,7 +480,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-seri
     <div class="field"><label>Moneda</label>
       <select id="mi-moneda"><option value="ARS">Pesos (ARS)</option><option value="USD">Dólares (USD)</option><option value="PYG">Guaraníes (PYG)</option></select>
     </div>
-    <div class="field"><label>Importe</label><input type="number" id="mi-amt" placeholder="0" oninput="livePreviewMoneda(this,'mi-preview','mi-moneda')"><div class="amt-preview" id="mi-preview"></div></div>
+    <div class="field"><label>Importe</label><input type="text" inputmode="decimal" id="mi-amt" placeholder="0" oninput="livePreviewMoneda(this,'mi-preview','mi-moneda')"><div class="amt-preview" id="mi-preview"></div></div>
     <input type="hidden" id="mi-tipo">
     <input type="hidden" id="mi-edit-id">
     <div class="info-box" style="margin-bottom:0;">💡 Los USD van directo a ahorro en dólares. Para convertir a ARS usá "Operación de cambio" en Resumen.</div>
@@ -493,7 +493,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-seri
     <div class="modal-title" id="mal-title">🏠 Alquiler</div>
     <div class="field"><label>Descripción</label><input type="text" id="mal-desc" placeholder="ej. Alquiler Cervantes, Alquiler Cullen..."></div>
     <div class="field"><label>Monto actual (ARS)</label>
-      <input type="number" id="mal-amt" placeholder="0" oninput="var s=this.value.replace(',','.');var n=parseFloat(s)||0;document.getElementById('mal-prev').textContent=n?fmtARSD(n):'';">
+      <input type="text" inputmode="decimal" id="mal-amt" placeholder="0" oninput="var s=this.value.replace(',','.');var n=parseFloat(s)||0;document.getElementById('mal-prev').textContent=n?fmtARSD(n):'';">
       <div id="mal-prev" style="font-size:15px;font-weight:700;color:var(--green);margin-top:4px;min-height:18px;"></div>
     </div>
     <div class="field"><label>Inicio del contrato (mes y año)</label>
@@ -526,8 +526,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-seri
 <div class="modal-overlay" id="modal-cambio">
   <div class="modal">
     <div class="modal-title">Operación de cambio USD → ARS</div>
-    <div class="field"><label>Monto en USD</label><input type="number" id="mc-usd" placeholder="ej. 500" oninput="previewCambio();livePreview(this,'mc-usd-preview','USD')"><div class="amt-preview" id="mc-usd-preview"></div></div>
-    <div class="field"><label>Cotización del día (ARS por USD)</label><input type="number" id="mc-tc" placeholder="ej. 1240" oninput="previewCambio()"></div>
+    <div class="field"><label>Monto en USD</label><input type="text" inputmode="decimal" id="mc-usd" placeholder="ej. 500" oninput="previewCambio();livePreview(this,'mc-usd-preview','USD')"><div class="amt-preview" id="mc-usd-preview"></div></div>
+    <div class="field"><label>Cotización del día (ARS por USD)</label><input type="text" inputmode="decimal" id="mc-tc" placeholder="ej. 1240" oninput="previewCambio()"></div>
     <div class="field"><label>Fecha</label><input type="date" id="mc-fecha"></div>
     <div style="background:var(--bg);border-radius:var(--radius-sm);padding:10px;margin-bottom:12px;">
       <div style="font-size:11px;color:var(--text3);">ARS que ingresan</div>
@@ -543,7 +543,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-seri
     <div class="modal-title" id="mrt-title">Agregar gasto recurrente</div>
     <div class="field"><label>Descripción</label><input type="text" id="mrt-desc" placeholder="ej. Netflix, Spotify, Comisión cuenta..."></div>
     <div class="field"><label>Importe mensual (ARS)</label>
-      <input type="number" id="mrt-amt" placeholder="0" oninput="var s=this.value.replace(',','.');var n=parseFloat(s)||0;document.getElementById('mrt-prev').textContent=n?fmtARSD(n):'';">
+      <input type="text" inputmode="decimal" id="mrt-amt" placeholder="0" oninput="var s=this.value.replace(',','.');var n=parseFloat(s)||0;document.getElementById('mrt-prev').textContent=n?fmtARSD(n):'';">
       <div id="mrt-prev" style="font-size:15px;font-weight:700;color:var(--green);margin-top:4px;min-height:18px;"></div>
     </div>
     <input type="hidden" id="mrt-tarjeta-id">
@@ -560,7 +560,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-seri
     <div class="modal-title" id="mit-title">Agregar impuesto / cargo</div>
     <div class="field"><label>Descripción</label><input type="text" id="mit-desc" placeholder="ej. DB IVA 21%, IIBB CABA 2%..."></div>
     <div class="field"><label>Porcentaje (%)</label>
-      <input type="number" id="mit-pct" placeholder="ej. 21" step="0.01" oninput="calcImpAuto()">
+      <input type="text" inputmode="decimal" id="mit-pct" placeholder="ej. 21" step="0.01" oninput="calcImpAuto()">
     </div>
     <div class="field" id="mit-base-field">
       <label>Aplicar sobre</label>
@@ -570,7 +570,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-seri
     </div>
     <div class="field">
       <label>Importe (ARS) — calculado o ingresá manual</label>
-      <input type="number" id="mit-amt" placeholder="0" oninput="var s=this.value.replace(',','.');var n=parseFloat(s)||0;document.getElementById('mit-prev').textContent=n?fmtARSD(n):'';">
+      <input type="text" inputmode="decimal" id="mit-amt" placeholder="0" oninput="var s=this.value.replace(',','.');var n=parseFloat(s)||0;document.getElementById('mit-prev').textContent=n?fmtARSD(n):'';">
       <div id="mit-prev" style="font-size:15px;font-weight:700;color:var(--red);margin-top:4px;min-height:18px;"></div>
     </div>
     <input type="hidden" id="mit-tarjeta-id">
@@ -593,7 +593,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-seri
   <div class="modal">
     <div class="modal-title" id="mgt-title">Agregar gasto</div>
     <div class="field"><label>Descripción</label><input type="text" id="mgt-desc" placeholder="ej. Electrodoméstico, Supermercado..."></div>
-    <div class="field"><label>Monto total (ARS)</label><input type="number" id="mgt-amt" placeholder="0" oninput="previewCuota();livePreview(this,'mgt-amt-preview','ARS')"><div class="amt-preview" id="mgt-amt-preview"></div></div>
+    <div class="field"><label>Monto total (ARS)</label><input type="text" inputmode="decimal" id="mgt-amt" placeholder="0" oninput="previewCuota();livePreview(this,'mgt-amt-preview','ARS')"><div class="amt-preview" id="mgt-amt-preview"></div></div>
     <div class="field"><label>Cuotas</label>
       <select id="mgt-cuotas" onchange="previewCuota()">
         <option value="1">1 cuota (contado)</option><option value="2">2 cuotas</option>
@@ -683,7 +683,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-seri
       </div>
       <div class="quick-field">
         <label>Importe (ARS)</label>
-        <input type="number" id="qs-amt" inputmode="decimal" placeholder="0" oninput="qPreviewAmt()">
+        <input type="text" inputmode="decimal" id="qs-amt" inputmode="decimal" placeholder="0" oninput="qPreviewAmt()">
         <div class="quick-amt-preview" id="qs-amt-preview"></div>
       </div>
       <button class="quick-save-btn" id="qs-save-btn" onclick="qSave()" disabled>Guardar gasto →</button>
@@ -710,6 +710,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-seri
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-edit-amt">
+  <div class="modal" style="padding-bottom:28px;">
+    <div class="modal-title" id="mea-title">Editar importe</div>
+    <div class="field">
+      <label id="mea-label">Importe</label>
+      <input type="text" inputmode="decimal" id="mea-input" placeholder="ej. 38.778,46"
+        oninput="var s=this.value.replace(/[^0-9.,]/g,'');this.value=s;var n=parseAmt(s);document.getElementById('mea-preview').textContent=n?fmtARSD(n):'';">
+      <div id="mea-preview" style="font-size:18px;font-weight:700;color:var(--green);margin-top:6px;min-height:22px;"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-sec" onclick="closeModal('modal-edit-amt')">Cancelar</button>
+      <button class="btn-prim" id="mea-save-btn">Guardar</button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <!-- FIREBASE -->
@@ -1258,11 +1273,11 @@ async function togglePaid(id, was) {
   showToast(!was ? '✓ Marcado como pagado' : 'Marcado como pendiente');
   loadFijos(); loadDashboard();
 }
-async function editFijoAmt(id, current) {
-  const v = prompt('Nuevo importe (ARS):', current);
-  if (v === null) return;
-  await setMonthDoc('fijos_estado', { [id + '_amt']: parseAmt(v) });
-  loadFijos(); loadDashboard();
+function editFijoAmt(id, current) {
+  editAmt('importe del fijo', current, 'ARS', async function(n) {
+    await setMonthDoc('fijos_estado', { [id + '_amt']: n });
+    loadFijos(); loadDashboard();
+  });
 }
 async function uploadCompFijo(id) {
   const inp = document.createElement('input');
@@ -1370,11 +1385,11 @@ async function loadIngresos() {
   document.getElementById('ing-total-ars').textContent = fmtARS(tARS);
   document.getElementById('ing-total-usd').textContent = fmtUSD(tUSD);
 }
-async function editIngresoAmt(id, current) {
-  const v = prompt('Nuevo importe:', current);
-  if (v === null) return;
-  await setMonthDoc('ingresos_amts', { [id + '_amt']: parseAmt(v) });
-  loadIngresos(); loadDashboard();
+function editIngresoAmt(id, current) {
+  editAmt('importe del ingreso', current, 'ARS', async function(n) {
+    await setMonthDoc('ingresos_amts', { [id + '_amt']: n });
+    loadIngresos(); loadDashboard();
+  });
 }
 async function delIngresoReg(id) {
   if (!confirm('¿Eliminar este ingreso regular? No aparecerá en meses futuros.')) return;
@@ -1850,7 +1865,7 @@ function calcImpAuto() {
 async function saveImpTarjeta() {
   const desc = document.getElementById('mit-desc').value.trim();
   const amt = parseAmt(document.getElementById('mit-amt').value);
-  const pct = parseFloat(document.getElementById('mit-pct').value) || 0;
+  const pct = parseAmt(document.getElementById('mit-pct').value);
   const baseOpt = document.getElementById('mit-base');
   const baseDesc = baseOpt.options[baseOpt.selectedIndex]?.text || '';
   const tid = document.getElementById('mit-tarjeta-id').value;
@@ -1947,21 +1962,23 @@ async function loadParaguay() {
   document.getElementById('py-neto-usd').textContent = fmtUSD(netoPYG / tcUSD);
 }
 
-async function editPyAmt(id, v) {
-  const n = prompt('Nuevo importe (PYG):', v); if (n === null) return;
-  await setMonthDoc('py_amts', { [id + '_amt']: parseFloat(n) || 0 }); loadParaguay();
+function editPyAmt(id, v) {
+  editAmt('importe (PYG)', v, 'PYG', async function(n) {
+    await setMonthDoc('py_amts', { [id + '_amt']: n }); loadParaguay();
+  });
 }
-async function editPyFijo(id, v) {
-  const n = prompt('Nuevo importe (PYG):', v); if (n === null) return;
-  await setMonthDoc('py_fijos_estado', { [id + '_amt']: parseFloat(n) || 0 }); loadParaguay();
+function editPyFijo(id, v) {
+  editAmt('importe fijo (PYG)', v, 'PYG', async function(n) {
+    await setMonthDoc('py_fijos_estado', { [id + '_amt']: n }); loadParaguay();
+  });
 }
 async function togglePyPaid(id, was) {
   await setMonthDoc('py_fijos_estado', { [id + '_paid']: !was }); loadParaguay();
 }
 async function savePyTC() {
   await setConfig('py_config', {
-    tc_ars: parseFloat(document.getElementById('py-tc-ars').value) || 7,
-    tc_usd: parseFloat(document.getElementById('py-tc-usd').value) || 7000
+    tc_ars: parseAmt(document.getElementById('py-tc-ars').value) || 7,
+    tc_usd: parseAmt(document.getElementById('py-tc-usd').value) || 7000
   });
   loadParaguay();
 }
@@ -1979,11 +1996,11 @@ function openModalPY(tipo) {
   let html = '';
   if (tipo === 'ing' || tipo === 'fijo') {
     html = `<div class="field"><label>${tipo === 'ing' ? 'Nombre / inquilino' : 'Nombre del gasto'}</label><input type="text" id="mpy-nombre" placeholder="ej. Juan / Servicios"></div>
-    <div class="field"><label>Importe (PYG)</label><input type="number" id="mpy-amt" placeholder="2500000"></div>
+    <div class="field"><label>Importe (PYG)</label><input type="text" inputmode="decimal" id="mpy-amt" placeholder="2500000"></div>
     <div class="field"><label>Día de vencimiento</label><input type="number" id="mpy-dia" placeholder="1" min="1" max="31"></div>`;
   } else {
     html = `<div class="field"><label>Descripción</label><input type="text" id="mpy-nombre" placeholder="ej. Arreglo cañería"></div>
-    <div class="field"><label>Importe (PYG)</label><input type="number" id="mpy-amt" placeholder="0"></div>`;
+    <div class="field"><label>Importe (PYG)</label><input type="text" inputmode="decimal" id="mpy-amt" placeholder="0"></div>`;
   }
   document.getElementById('modal-py-fields').innerHTML = html;
   document.getElementById('modal-py').classList.add('open');
@@ -2099,15 +2116,33 @@ document.addEventListener('change', function(e) {
 
 // ── UTILS ────────────────────────────────────────────────────
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function editAmt(label, currentVal, currency, onSave) {
+  document.getElementById('mea-title').textContent = 'Editar ' + label;
+  document.getElementById('mea-label').textContent = currency === 'PYG' ? 'Importe (PYG)' : currency === 'USD' ? 'Importe (USD)' : 'Importe (ARS)';
+  const inp = document.getElementById('mea-input');
+  inp.value = currentVal ? String(currentVal).replace('.', ',') : '';
+  const prev = document.getElementById('mea-preview');
+  prev.textContent = currentVal ? (currency === 'PYG' ? fmtPYG(currentVal) : currency === 'USD' ? fmtUSD(currentVal) : fmtARSD(currentVal)) : '';
+  document.getElementById('mea-save-btn').onclick = function() {
+    const n = parseAmt(inp.value);
+    if (!n && n !== 0) { showToast('Ingresá un valor válido'); return; }
+    closeModal('modal-edit-amt');
+    onSave(n);
+  };
+  inp.onkeydown = function(e) { if (e.key === 'Enter') document.getElementById('mea-save-btn').click(); };
+  document.getElementById('modal-edit-amt').classList.add('open');
+  setTimeout(() => inp.focus(), 100);
+}
 function toBase64(file) { return new Promise((r, j) => { const fr = new FileReader(); fr.onload = e => r(e.target.result); fr.onerror = j; fr.readAsDataURL(file); }); }
 function viewImg(src) { const w = window.open('', '_blank'); w.document.write(`<img src="${decodeURIComponent(src)}" style="max-width:100%;height:auto;">`); }
 function dlImg(src, name) { const a = document.createElement('a'); a.href = decodeURIComponent(src); a.download = (name || 'comp') + '.jpg'; a.click(); }
 
-async function promptEdit(col, id, current, cb) {
-  const v = prompt('Nuevo importe:', current);
-  if (v === null) return;
-  await updateItem(col, id, { amt: parseAmt(v) });
-  if (cb) cb();
+function promptEdit(col, id, current, cb, currency) {
+  editAmt('importe', current, currency || 'ARS', async function(n) {
+    await updateItem(col, id, { amt: n });
+    if (cb) cb();
+  });
 }
 async function confirmDelete(col, id, cb) {
   if (!confirm('¿Eliminar?')) return;
@@ -2248,7 +2283,7 @@ function qPreviewAmt() {
 
 async function qSave() {
   const desc = document.getElementById('qs-desc').value.trim() || qCat;
-  const amt = parseFloat(document.getElementById('qs-amt').value) || 0;
+  const amt = parseAmt(document.getElementById('qs-amt').value);
   if (!amt) { showToast('Ingresá un importe'); return; }
 
   const btn = document.getElementById('qs-save-btn');
@@ -2310,7 +2345,7 @@ window.openModalGastoTarjeta = openModalGastoTarjeta; window.saveGastoTarjeta = 
 window.openModalPY = openModalPY; window.savePYItem = savePYItem; window.savePyTC = savePyTC;
 window.togglePyPaid = togglePyPaid; window.editPyAmt = editPyAmt; window.editPyFijo = editPyFijo; window.delPyGlobal = delPyGlobal;
 window.deleteItem = deleteItem; window.updateItem = updateItem;
-window.promptEdit = promptEdit; window.confirmDelete = confirmDelete;
+window.promptEdit = promptEdit; window.editAmt = editAmt; window.confirmDelete = confirmDelete;
 window.viewImg = viewImg; window.dlImg = dlImg;
 window.openModalRecTarjeta = openModalRecTarjeta; window.saveRecTarjeta = saveRecTarjeta; window.delRecTarjeta = delRecTarjeta;
 window.openModalImpTarjeta = openModalImpTarjeta; window.calcImpAuto = calcImpAuto; window.saveImpTarjeta = saveImpTarjeta; window.delImpTarjeta = delImpTarjeta;
