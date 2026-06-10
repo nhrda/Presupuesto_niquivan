@@ -493,7 +493,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-seri
     <div class="modal-title" id="mal-title">🏠 Alquiler</div>
     <div class="field"><label>Descripción</label><input type="text" id="mal-desc" placeholder="ej. Alquiler Cervantes, Alquiler Cullen..."></div>
     <div class="field"><label>Monto actual (ARS)</label>
-      <input type="text" inputmode="decimal" id="mal-amt" placeholder="0" oninput="var s=this.value.replace(',','.');var n=parseFloat(s)||0;document.getElementById('mal-prev').textContent=n?fmtARSD(n):'';">
+      <input type="text" inputmode="decimal" id="mal-amt" placeholder="0" oninput="var s=this.value;var n=parseAmt(s)||0;document.getElementById('mal-prev').textContent=n?fmtARSD(n):'';">
       <div id="mal-prev" style="font-size:15px;font-weight:700;color:var(--green);margin-top:4px;min-height:18px;"></div>
     </div>
     <div class="field"><label>Inicio del contrato (mes y año)</label>
@@ -543,7 +543,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-seri
     <div class="modal-title" id="mrt-title">Agregar gasto recurrente</div>
     <div class="field"><label>Descripción</label><input type="text" id="mrt-desc" placeholder="ej. Netflix, Spotify, Comisión cuenta..."></div>
     <div class="field"><label>Importe mensual (ARS)</label>
-      <input type="text" inputmode="decimal" id="mrt-amt" placeholder="0" oninput="var s=this.value.replace(',','.');var n=parseFloat(s)||0;document.getElementById('mrt-prev').textContent=n?fmtARSD(n):'';">
+      <input type="text" inputmode="decimal" id="mrt-amt" placeholder="0" oninput="var s=this.value;var n=parseAmt(s)||0;document.getElementById('mrt-prev').textContent=n?fmtARSD(n):'';">
       <div id="mrt-prev" style="font-size:15px;font-weight:700;color:var(--green);margin-top:4px;min-height:18px;"></div>
     </div>
     <input type="hidden" id="mrt-tarjeta-id">
@@ -570,7 +570,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-seri
     </div>
     <div class="field">
       <label>Importe (ARS) — calculado o ingresá manual</label>
-      <input type="text" inputmode="decimal" id="mit-amt" placeholder="0" oninput="var s=this.value.replace(',','.');var n=parseFloat(s)||0;document.getElementById('mit-prev').textContent=n?fmtARSD(n):'';">
+      <input type="text" inputmode="decimal" id="mit-amt" placeholder="0" oninput="var s=this.value;var n=parseAmt(s)||0;document.getElementById('mit-prev').textContent=n?fmtARSD(n):'';">
       <div id="mit-prev" style="font-size:15px;font-weight:700;color:var(--red);margin-top:4px;min-height:18px;"></div>
     </div>
     <input type="hidden" id="mit-tarjeta-id">
@@ -834,8 +834,32 @@ function fmtARS(n) {
   });
 }
 function parseAmt(val) {
-  if (!val) return 0;
-  const s = String(val).trim().replace(/\./g, '').replace(',', '.');
+  if (!val && val !== 0) return 0;
+  var s = String(val).trim().replace(/\s/g, '');
+  if (!s) return 0;
+  var hasComma = s.includes(',');
+  var hasDot = s.includes('.');
+  if (hasComma && hasDot) {
+    // Both present: whichever comes last is decimal separator
+    if (s.lastIndexOf(',') > s.lastIndexOf('.')) {
+      // 38.778,46 → dot=miles, comma=decimal
+      s = s.replace(/\./g, '').replace(',', '.');
+    } else {
+      // 38,778.46 → comma=miles, dot=decimal
+      s = s.replace(/,/g, '');
+    }
+  } else if (hasComma) {
+    // Only comma → decimal separator: 38778,46 → 38778.46
+    s = s.replace(',', '.');
+  } else if (hasDot) {
+    // Only dot: if digits after dot are exactly 3 → thousands separator
+    var parts = s.split('.');
+    var lastPart = parts[parts.length - 1];
+    if (lastPart.length === 3) {
+      s = s.replace(/\./g, ''); // 38.778 → 38778
+    }
+    // otherwise keep as decimal: 38.46 → 38.46
+  }
   return parseFloat(s) || 0;
 }
 function fmtARSD(n) { return 'ARS ' + (n||0).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
@@ -939,6 +963,50 @@ async function init() {
   fetchTC();
   fetchPyTC();
   loadAll();
+  requestNotifPermission();
+}
+
+function requestNotifPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+async function checkVencimientos() {
+  const today = new Date().getDate();
+  const [allRec, allServ, monthData] = await Promise.all([
+    getGlobalList('fijos_rec'), getGlobalList('fijos_serv'), getMonthDoc('fijos_estado')
+  ]);
+  const fijos = [...allRec, ...allServ].filter(f => isActiveInMonth(f, curYear, curMonth));
+  const alertas = [];
+  fijos.forEach(f => {
+    const paid = monthData[f.id + '_paid'] || false;
+    if (!paid && f.dia) {
+      const diff = f.dia - today;
+      if (diff >= 0 && diff <= 5) {
+        alertas.push({ nombre: f.nombre, dia: f.dia, diff });
+      }
+    }
+  });
+  if (!alertas.length) return;
+  // In-app banner
+  const existing = document.getElementById('venc-banner');
+  if (existing) existing.remove();
+  const banner = document.createElement('div');
+  banner.id = 'venc-banner';
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:500;background:#854F0B;color:#fff;padding:10px 16px;font-size:13px;font-weight:600;display:flex;justify-content:space-between;align-items:center;';
+  const msgs = alertas.map(a => a.diff === 0 ? `${a.nombre}: vence HOY` : `${a.nombre}: vence en ${a.diff} día${a.diff>1?'s':''}`);
+  banner.innerHTML = '<span>⚠️ ' + msgs.join(' · ') + '</span><button onclick="this.parentElement.remove()" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:0 4px;">×</button>';
+  document.body.prepend(banner);
+  // Push notification if permission granted
+  if ('Notification' in window && Notification.permission === 'granted') {
+    alertas.forEach(a => {
+      new Notification('Presupuesto Niquivan', {
+        body: a.diff === 0 ? `${a.nombre} vence HOY` : `${a.nombre} vence en ${a.diff} día${a.diff>1?'s':''}`,
+        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="%23185FA5"/><text x="32" y="44" font-size="36" text-anchor="middle" fill="white">💰</text></svg>'
+      });
+    });
+  }
 }
 function loadAll() {
   loadDashboard();
@@ -948,6 +1016,7 @@ function loadAll() {
   loadTarjetas();
   loadAlquileres();
   if (USERS[currentUser].py) loadParaguay();
+  setTimeout(checkVencimientos, 2000);
   loadHistorial();
 }
 
@@ -2097,8 +2166,7 @@ async function saveMonthClose(saldoARS, saldoUSD) {
 function livePreview(input, previewId, currency) {
   const el = document.getElementById(previewId);
   if (!el) return;
-  const raw = input.value.replace(',', '.');
-  const n = parseFloat(raw) || 0;
+  const n = parseAmt(input.value);
   if (!n) { el.textContent = ''; return; }
   el.textContent = currency === 'USD' ? fmtUSD(n) : currency === 'PYG' ? fmtPYG(n) : fmtARSD(n);
 }
@@ -2345,7 +2413,7 @@ window.openModalGastoTarjeta = openModalGastoTarjeta; window.saveGastoTarjeta = 
 window.openModalPY = openModalPY; window.savePYItem = savePYItem; window.savePyTC = savePyTC;
 window.togglePyPaid = togglePyPaid; window.editPyAmt = editPyAmt; window.editPyFijo = editPyFijo; window.delPyGlobal = delPyGlobal;
 window.deleteItem = deleteItem; window.updateItem = updateItem;
-window.promptEdit = promptEdit; window.editAmt = editAmt; window.confirmDelete = confirmDelete;
+window.promptEdit = promptEdit; window.editAmt = editAmt; window.checkVencimientos = checkVencimientos; window.confirmDelete = confirmDelete;
 window.viewImg = viewImg; window.dlImg = dlImg;
 window.openModalRecTarjeta = openModalRecTarjeta; window.saveRecTarjeta = saveRecTarjeta; window.delRecTarjeta = delRecTarjeta;
 window.openModalImpTarjeta = openModalImpTarjeta; window.calcImpAuto = calcImpAuto; window.saveImpTarjeta = saveImpTarjeta; window.delImpTarjeta = delImpTarjeta;
