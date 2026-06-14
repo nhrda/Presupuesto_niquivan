@@ -361,7 +361,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-seri
     <div class="section-label"><span>Supermercado</span><span id="total-super" style="font-weight:500;font-size:12px;text-transform:none;letter-spacing:0;color:var(--text2);"></span></div>
     <div class="card" id="list-super"></div>
     <button class="add-btn" onclick="openModal('super')">+ Agregar gasto de supermercado</button>
-    <div class="section-label"><span>Gustitos y salidas</span><span id="total-salidas" style="font-weight:500;font-size:12px;text-transform:none;letter-spacing:0;color:var(--text2);"></span></div>
+    <div class="section-label"><span>Gustitos</span><span id="total-salidas" style="font-weight:500;font-size:12px;text-transform:none;letter-spacing:0;color:var(--text2);"></span></div>
     <div class="card" id="list-salidas"></div>
     <button class="add-btn" onclick="openModal('salidas')">+ Agregar salida / gustito</button>
     <div class="section-label"><span>Otros gastos</span><span id="total-otros" style="font-weight:500;font-size:12px;text-transform:none;letter-spacing:0;color:var(--text2);"></span></div>
@@ -1206,7 +1206,7 @@ async function loadDashboard() {
     // Bar chart
     const barData = [
       { label: 'Supermercado', amt: cats.super, color: '#185FA5' },
-      { label: 'Salidas', amt: cats.salidas, color: '#D85A30' },
+      { label: 'Gustitos', amt: cats.salidas, color: '#D85A30' },
       { label: 'Otros', amt: cats.otros, color: '#888780' },
       { label: 'Fijos pagados', amt: totalFijosPagados, color: '#534AB7' },
       { label: 'Tarjetas', amt: totalTarjetas, color: '#D4537E' },
@@ -1255,7 +1255,7 @@ async function loadGastos() {
   });
 }
 function openModal(cat, editItem) {
-  const names = { super: 'Supermercado', salidas: 'Gustito / salida', otros: 'Otro gasto' };
+  const names = { super: 'Supermercado', salidas: 'Gustito', otros: 'Otro gasto' };
   document.getElementById('modal-gasto-title').textContent = (editItem ? 'Editar · ' : 'Agregar · ') + names[cat];
   document.getElementById('mg-cat').value = cat;
   document.getElementById('mg-edit-id').value = editItem ? editItem.id : '';
@@ -2227,7 +2227,7 @@ let qStep = 0;
 
 const GASTO_CATS = [
   { id:'super',   icon:'🛒', label:'Supermercado' },
-  { id:'salidas', icon:'🍕', label:'Salidas' },
+  { id:'salidas', icon:'🍕', label:'Gustitos' },
   { id:'otros',   icon:'📦', label:'Otros' },
 ];
 
@@ -2320,7 +2320,7 @@ async function qLoadFijosStep() {
 
 function qSelectCat(cat) {
   qCat = cat;
-  const names = { super:'Supermercado', salidas:'Salidas', otros:'Otros gastos' };
+  const names = { super:'Supermercado', salidas:'Gustitos', otros:'Otros gastos' };
   document.getElementById('qs-desc').value = '';
   document.getElementById('qs-amt').value = '';
   document.getElementById('qs-amt-preview').textContent = '';
@@ -2361,7 +2361,7 @@ async function qSave() {
   var _fq=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'});
   await addItem('gastos', { desc, amt, cat: qCat, sub: '', fecha: _fq });
 
-  const catNames = { super:'Supermercado', salidas:'Salidas', otros:'Otros gastos' };
+  const catNames = { super:'Supermercado', salidas:'Gustitos', otros:'Otros gastos' };
   document.getElementById('qs-success-sub').textContent =
     fmtARS(amt) + ' en ' + catNames[qCat] + ' · ' + MONTHS[curMonth] + ' ' + curYear;
 
