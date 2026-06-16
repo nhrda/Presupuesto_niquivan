@@ -1143,7 +1143,8 @@ async function loadDashboard() {
     });
 
     // USD neto: ingresos USD minus what was changed to ARS this month
-    const ingresosUSD_neto = Math.max(0, ingresosUSD_bruto - usdCambiado);
+    // Can be negative when cambios draw from accumulated savings
+    const ingresosUSD_neto = ingresosUSD_bruto - usdCambiado;
 
     // Saldo del mes (sin carry-over)
     const saldoMes = ingresosARS - totalGastos;
