@@ -2,7 +2,7 @@ name: Niquivan - Recordatorios diarios
 
 on:
   schedule:
-    # 10:00 UTC = 07:00 AM Argentina (UTC-3)
+    # 10:00 UTC = 07:00 AM Argentina
     - cron: '0 10 * * *'
   workflow_dispatch:
 
@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+
     steps:
       - name: Descargar repositorio
         uses: actions/checkout@v4
@@ -20,16 +21,18 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Instalar dependencias
+      - name: Instalar Firebase Admin
         run: npm install firebase-admin
 
       - name: Ejecutar recordatorios
         run: node scripts/daily-reminder.js
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
           EMAILJS_SERVICE_ID: ${{ secrets.EMAILJS_SERVICE_ID }}
           EMAILJS_TEMPLATE_ID: ${{ secrets.EMAILJS_TEMPLATE_ID }}
           EMAILJS_PUBLIC_KEY: ${{ secrets.EMAILJS_PUBLIC_KEY }}
           EMAILJS_PRIVATE_KEY: ${{ secrets.EMAILJS_PRIVATE_KEY }}
+
           EMAILJS_TO_EMAIL_1: ${{ secrets.EMAILJS_TO_EMAIL_1 }}
           EMAILJS_TO_EMAIL_2: ${{ secrets.EMAILJS_TO_EMAIL_2 }}
