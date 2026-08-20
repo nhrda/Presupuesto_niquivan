@@ -1597,10 +1597,11 @@ async function saveAlquiler() {
   const inicio = document.getElementById('mal-inicio').value;
   const duracion = parseInt(document.getElementById('mal-duracion').value) || 24;
   const auFreq = parseInt(document.getElementById('mal-aumento-freq').value) || 3;
+  const finContrato = document.getElementById('alq-finContrato').value || null;
   const editId = document.getElementById('mal-id').value;
   if (!desc) { showToast('Ingresá descripción'); return; }
   if (!inicio) { showToast('Ingresá el mes de inicio'); return; }
-  const desde = `${curYear}-${String(curMonth+1).padStart(2,'0')}`;
+  const data = { desc, amt, moneda: 'ARS', inicio, duracion, auFreq, desde, finContrato };
   const data = { desc, amt, moneda: 'ARS', inicio, duracion, auFreq, desde };
   if (editId) {
     await updateGlobalItem('alquileres', editId, data);
