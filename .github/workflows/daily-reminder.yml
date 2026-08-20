@@ -2,9 +2,9 @@ name: Niquivan - Recordatorios diarios
 
 on:
   schedule:
-    # 7:00 AM hora Argentina (UTC-3) = 10:00 AM UTC
+    # 10:00 UTC = 07:00 AM Argentina (UTC-3)
     - cron: '0 10 * * *'
-  workflow_dispatch: # Permite ejecutarlo manualmente para probar
+  workflow_dispatch:
 
 jobs:
   send-reminder:
