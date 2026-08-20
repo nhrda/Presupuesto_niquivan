@@ -35,167 +35,129 @@ function addMonths(dateStr, months) {
 
 async function main() {
   const today = getArgentinaDate(0);
-  const tomorrow = getArgentinaDate(1);
   const todayKey = today.dateStr;
 
   console.log(`Ejecutando para: ${todayKey}`);
 
-  // 1. IDEMPOTENCIA: Evitar mails duplicados en el mismo día
+  // IDEMPOTENCIA
   const sendRef = db.collection('email_reminder_sends').doc(todayKey);
   const sendDoc = await sendRef.get();
   if (sendDoc.exists) {
-    console.log('Ya se enviaron recordatorios hoy. Salteando ejecución.');
+    console.log('Ya se enviaron recordatorios hoy.');
     return;
   }
 
-  // 2. Obtener datos de Firestore
-  const fijosRecSnap = await db.collection('fijos_rec').get();
-  const fijosServSnap = await db.collection('fijos_serv').get();
-  // El estado mensual se guarda con clave YYYY-MM
-  const mesActual = todayKey.slice(0, 7); 
-  const fijosEstadoSnap = await db.collection('fijos_estado').doc(mesActual).get();
-  const alquileresSnap = await db.collection('alquileres').get();
+  // OBTENER DATOS
+  const mesActual = todayKey.slice(0, 7);
+  const [fijosRecSnap, fijosServSnap, fijosEstadoSnap, alquileresSnap] = await Promise.all([
+    db.collection('fijos_rec').get(),
+    db.collection('fijos_serv').get(),
+    db.collection('fijos_estado').doc(mesActual).get(),
+    db.collection('alquileres').get()
+  ]);
 
   const fijosEstado = fijosEstadoSnap.exists ? fijosEstadoSnap.data() : {};
   const fijos = [...fijosRecSnap.docs, ...fijosServSnap.docs].map(d => ({ id: d.id, ...d.data() }));
   const alquileres = alquileresSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-  // 3. Procesar Fijos
+  // FIJOS
   const fijosHoy = [];
   const fijosManana = [];
-
   for (const f of fijos) {
-    if (fijosEstado[`${f.id}_paid`]) continue; // Ya está marcado como pagado
+    if (fijosEstado[`${f.id}_paid`]) continue;
     const dia = Number(f.dia);
     if (dia === Number(today.d)) fijosHoy.push(f);
-    if (dia === Number(tomorrow.d)) fijosManana.push(f);
+    if (dia === Number(today.d) + 1 || (dia === 1 && Number(today.d) === 31)) fijosManana.push(f);
   }
 
-  // 4. Procesar Alquileres
-  const alquileresAumentoEsteMes = [];
-  const alquileresFinEsteMes = [];
+  // ALQUILERES
+  const alquileresAumento = [];
   const alquileresFinUnMesAntes = [];
+  const alquileresFinEsteMes = [];
 
   for (const a of alquileres) {
-    // A) Lógica de Aumento (basada en inicio + auFreq)
-    if (a.inicio && a.auFreq) {
+    // Aumentos
+    if (a.inicio && a.auFreq && today.d === '01') {
       const [startY, startM] = a.inicio.split('-').map(Number);
       const startAbs = startY * 12 + (startM - 1);
       const currentAbs = today.y * 12 + (Number(today.m) - 1);
       const diff = currentAbs - startAbs;
-      const freq = Number(a.auFreq);
-      
-      if (diff >= 0 && diff % freq === 0 && today.d === '01') {
-        alquileresAumentoEsteMes.push(a);
+      if (diff >= 0 && diff % Number(a.auFreq) === 0) {
+        alquileresAumento.push(a);
       }
     }
 
-    // B) Lógica de Finalización
+    // Finalización
     if (a.finContrato) {
-      // Fecha exacta definida (YYYY-MM-DD)
       const unMesAntes = addMonths(a.finContrato, -1);
-      
+      if (unMesAntes === todayKey) alquileresFinUnMesAntes.push(a);
       if (a.finContrato.startsWith(`${today.y}-${today.m}`) && today.d === '01') {
-        alquileresFinEsteMes.push({ ...a, tipo: 'exacto' });
+        alquileresFinEsteMes.push(a);
       }
-      if (unMesAntes === today.dateStr) {
-        alquileresFinUnMesAntes.push({ ...a, tipo: 'exacto' });
-      }
-    } else if (a.inicio && a.duracion) {
-      // Fallback: cálculo por mes si no hay fecha exacta
+    } else if (a.inicio && a.duracion && today.d === '01') {
       const [startY, startM] = a.inicio.split('-').map(Number);
-      const duracion = Number(a.duracion);
-      const endAbs = (startY * 12 + (startM - 1)) + duracion;
+      const endAbs = (startY * 12 + (startM - 1)) + Number(a.duracion);
       const endY = Math.floor(endAbs / 12);
       const endM = String((endAbs % 12) + 1).padStart(2, '0');
-      
-      if (`${endY}-${endM}` === `${today.y}-${today.m}` && today.d === '01') {
-        alquileresFinEsteMes.push({ ...a, tipo: 'estimado' });
+      if (`${endY}-${endM}` === `${today.y}-${today.m}`) {
+        alquileresFinEsteMes.push(a);
       }
     }
   }
 
-  // 5. Decidir si hay algo que avisar
-  const hayAvisos = fijosHoy.length > 0 || fijosManana.length > 0 || 
-                    alquileresAumentoEsteMes.length > 0 || 
-                    alquileresFinEsteMes.length > 0 || 
-                    alquileresFinUnMesAntes.length > 0;
-
-  if (!hayAvisos) {
-    console.log('No hay avisos relevantes para hoy. No se envía mail.');
+  // DECIDIR SI ENVÍAR
+  if (!fijosHoy.length && !fijosManana.length && !alquileresAumento.length && !alquileresFinUnMesAntes.length && !alquileresFinEsteMes.length) {
+    console.log('Sin avisos.');
     return;
   }
 
-  // 6. Marcar como enviado ANTES de mandar el mail (garantía de idempotencia)
-  await sendRef.set({ 
-    sentAt: new Date().toISOString(), 
-    resumen: `Fijos: ${fijosHoy.length + fijosManana.length}, Alquileres: ${alquileresAumentoEsteMes.length + alquileresFinEsteMes.length + alquileresFinUnMesAntes.length}` 
-  });
+  // MARCAR COMO ENVIADO
+  await sendRef.set({ sentAt: new Date().toISOString() });
 
-  // 7. Construir el HTML del mail
-  let html = `<h2 style="color:#051721; font-family: Arial, sans-serif;">💰 Presupuesto Niquivan - Recordatorios</h2>`;
-  
-  if (fijosHoy.length > 0) {
-    html += `<h3 style="color:#d32f2f;">🔴 Vencen HOY (${formatDate(today.dateStr)})</h3><ul>`;
-    fijosHoy.forEach(f => html += `<li><strong>${f.nombre}</strong> (Día ${f.dia})</li>`);
+  // ARMAR HTML
+  let html = `<h2>💰 Niquivan - Recordatorios</h2>`;
+  if (fijosHoy.length) {
+    html += `<h3>🔴 HOY</h3><ul>`;
+    fijosHoy.forEach(f => html += `<li>${f.nombre}</li>`);
+    html += `</ul>`;
+  }
+  if (fijosManana.length) {
+    html += `<h3> MAÑANA</h3><ul>`;
+    fijosManana.forEach(f => html += `<li>${f.nombre}</li>`);
+    html += `</ul>`;
+  }
+  if (alquileresAumento.length) {
+    html += `<h3>🏠 AUMENTOS</h3><ul>`;
+    alquileresAumento.forEach(a => html += `<li>${a.desc}</li>`);
+    html += `</ul>`;
+  }
+  if (alquileresFinUnMesAntes.length) {
+    html += `<h3>⚠️ FINALIZA EN 1 MES</h3><ul>`;
+    alquileresFinUnMesAntes.forEach(a => html += `<li>${a.desc}</li>`);
+    html += `</ul>`;
+  }
+  if (alquileresFinEsteMes.length) {
+    html += `<h3>🚨 FINALIZA ESTE MES</h3><ul>`;
+    alquileresFinEsteMes.forEach(a => html += `<li>${a.desc}</li>`);
     html += `</ul>`;
   }
 
-  if (fijosManana.length > 0) {
-    html += `<h3 style="color:#f57c00;">🟠 Vencen MAÑANA (${formatDate(tomorrow.dateStr)})</h3><ul>`;
-    fijosManana.forEach(f => html += `<li><strong>${f.nombre}</strong> (Día ${f.dia})</li>`);
-    html += `</ul>`;
-  }
-
-  if (alquileresAumentoEsteMes.length > 0 && today.d === '01') {
-    html += `<h3 style="color:#1976d2;">🏠 Alquileres: Aumento/Renovación este mes</h3><ul>`;
-    alquileresAumentoEsteMes.forEach(a => html += `<li><strong>${a.desc}</strong></li>`);
-    html += `</ul>`;
-  }
-
-  if (alquileresFinUnMesAntes.length > 0) {
-    html += `<h3 style="color:#7b1fa2;">⚠️ Alquileres: Finaliza contrato en 1 mes</h3><ul>`;
-    alquileresFinUnMesAntes.forEach(a => html += `<li><strong>${a.desc}</strong> (${a.finContrato ? formatDate(a.finContrato) : 'Mes estimado'})</li>`);
-    html += `</ul>`;
-  }
-
-  if (alquileresFinEsteMes.length > 0 && today.d === '01') {
-    html += `<h3 style="color:#c2185b;">🚨 Alquileres: Finaliza contrato ESTE mes</h3><ul>`;
-    alquileresFinEsteMes.forEach(a => html += `<li><strong>${a.desc}</strong> (${a.finContrato ? formatDate(a.finContrato) : 'Mes estimado'})</li>`);
-    html += `</ul>`;
-  }
-
-  // 8. Enviar Email vía EmailJS
-  const destinatarios = [process.env.EMAILJS_TO_EMAIL_1, process.env.EMAILJS_TO_EMAIL_2].filter(e => e && e.trim() !== '');
-  
+  // ENVIAR EMAIL
+  const destinatarios = [process.env.EMAILJS_TO_EMAIL_1, process.env.EMAILJS_TO_EMAIL_2].filter(e => e);
   for (const email of destinatarios) {
-    const payload = {
-      service_id: process.env.EMAILJS_SERVICE_ID,
-      template_id: process.env.EMAILJS_TEMPLATE_ID,
-      user_id: process.env.EMAILJS_PUBLIC_KEY,
-      accessToken: process.env.EMAILJS_PRIVATE_KEY,
-      template_params: {
-        to_email: email,
-        subject: `💰 Niquivan: Recordatorios ${formatDate(today.dateStr)}`,
-        html_message: html
-      }
-    };
-
     const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        service_id: process.env.EMAILJS_SERVICE_ID,
+        template_id: process.env.EMAILJS_TEMPLATE_ID,
+        user_id: process.env.EMAILJS_PUBLIC_KEY,
+        accessToken: process.env.EMAILJS_PRIVATE_KEY,
+        template_params: { to_email: email, subject: 'Niquivan - Recordatorios', html_message: html }
+      })
     });
-
-    if (res.ok) {
-      console.log(`Mail enviado correctamente a ${email}`);
-    } else {
-      console.error(`Error EmailJS para ${email}:`, await res.text());
-    }
+    if (res.ok) console.log(`Enviado a ${email}`);
   }
 }
 
-main().catch(err => {
-  console.error(err);
-  process.exit(1);
-});
+main().catch(console.error);
