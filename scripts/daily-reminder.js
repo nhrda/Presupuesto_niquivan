@@ -136,13 +136,16 @@ function subtractOneMonth(dateKey) {
 
 function isActiveInMonth(item, year, month) {
   // month = 1 a 12
-  if (!item.desde) return true;
+  const [desdeYear, desdeMonth] = String(item.desde || '0-0').split('-').map(Number);
 
-  const [desdeYear, desdeMonth] = String(item.desde).split('-').map(Number);
+  if (desdeYear && desdeMonth && absMonth(desdeYear, desdeMonth) > absMonth(year, month)) return false;
 
-  if (!desdeYear || !desdeMonth) return true;
-
-  return absMonth(desdeYear, desdeMonth) <= absMonth(year, month);
+  // 'hasta' (YYYY-MM): último mes en que el ítem está vigente (se usa al dar de baja)
+  if (item.hasta) {
+    const [hastaYear, hastaMonth] = String(item.hasta).split('-').map(Number);
+    if (hastaYear && hastaMonth && absMonth(hastaYear, hastaMonth) < absMonth(year, month)) return false;
+  }
+  return true;
 }
 
 // ============================================================
