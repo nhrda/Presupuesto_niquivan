@@ -1,0 +1,47 @@
+rules_version = '2';
+
+// Reglas de Firestore para Presupuesto Niquivan.
+// - Solo entra quien está logueado con Firebase Auth Y tiene un perfil en roles/{uid}.
+//   (Firebase deja crear cuentas a cualquiera que tenga la apiKey, por eso no alcanza con "logueado".)
+// - Paraguay (colecciones py_*, {YYYY-MM}_py_* y config/py_config) solo para perfiles con py: true.
+// - Los perfiles (roles) se crean a mano en la consola: nadie los puede escribir desde la app.
+// - El recordatorio diario usa Firebase Admin (cuenta de servicio) y no pasa por estas reglas.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isMember() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/roles/$(request.auth.uid));
+    }
+    function canPy() {
+      return isMember()
+        && get(/databases/$(database)/documents/roles/$(request.auth.uid)).data.py == true;
+    }
+    function isPyCollection(col) {
+      return col.matches('([0-9]{4}-[0-9]{2}_)?py_.*');
+    }
+
+    // Perfil de cada usuario: cada uno lee solo el suyo; nadie escribe desde la app.
+    match /roles/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // Config: py_config es de Paraguay; el resto es para cualquier miembro.
+    match /config/{key} {
+      allow read, write: if isMember() && (key != 'py_config' || canPy());
+    }
+
+    // Todas las demás colecciones de primer nivel (gastos por mes, fijos, tarjetas, etc.).
+    match /{col}/{docId} {
+      allow read, write: if col != 'roles' && col != 'config'
+        && isMember()
+        && (!isPyCollection(col) || canPy());
+    }
+
+    // Todo lo demás (subcolecciones, rutas no previstas): cerrado.
+  }
+}
